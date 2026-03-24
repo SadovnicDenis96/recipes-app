@@ -1,31 +1,38 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { TextInput } from 'react-native';
-
 import {
-  Dimensions,
+  Alert, Dimensions,
   FlatList,
   Image,
   Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
-  TouchableOpacity,
+  Text, TextInput, TouchableOpacity,
   View
 } from 'react-native';
+import { useAuth } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 const Home = ({ navigation }) => {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [logoutVisible, setLogoutVisible] = useState(false);
+  const { user, logout } = useAuth();
 
   const categories = ['All', 'Indian', 'Italian', 'Asian', 'Chinese', 'Mexican'];
-  const [logoutVisible, setLogoutVisible] = useState(false);
-  const handleLogout = () => {
-  setLogoutVisible(false);
-  navigation.navigate('Login');
-};
+
+  const handleLogout = async () => {
+    setLogoutVisible(false);
+    const result = await logout();
+    if (result.success) {
+      Alert.alert('До свидания!', 'Вы вышли из аккаунта');
+      // Navigation will automatically switch to Welcome screen
+      // when user becomes null (handled by AppNavigation)
+    } else {
+      Alert.alert('Ошибка', result.error || 'Не удалось выйти');
+    }
+  };
 
   const featuredRecipes = [
     {
@@ -128,7 +135,7 @@ const Home = ({ navigation }) => {
 {/* Header */}
 <View style={styles.header}>
   <View>
-    <Text style={styles.greeting}>Hello Jega</Text>
+    <Text style={styles.greeting}>Hello {user?.displayName || 'Chef'}</Text>
     <Text style={styles.subGreeting}>What are you cooking today?</Text>
   </View>
 <TouchableOpacity

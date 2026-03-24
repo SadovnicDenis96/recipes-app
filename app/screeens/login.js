@@ -1,40 +1,92 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { useAuth } from '../context/AuthContext';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  
+  const { login, loading, error, user } = useAuth();
 
-  const handleSignIn = () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+  // Navigate to Home once user is authenticated
+  useEffect(() => {
+    if (user && isLoggingIn) {
+      setIsLoggingIn(false);
+      // User is authenticated, app will automatically navigate to Home
+      // via the AppNavigation conditional logic
+    }
+  }, [user, isLoggingIn]);
+
+  const handleSignIn = async () => {
+    if (!email.trim()) {
+      Alert.alert('Ошибка', 'Пожалуйста, введите email');
       return;
     }
-    console.log('Signing in with:', email, password);
-    navigation.navigate('Home'); // sau ecranul principal
+
+    if (!password) {
+      Alert.alert('Ошибка', 'Пожалуйста, введите пароль');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    const result = await login(email, password);
+
+    if (result.success) {
+      Alert.alert('Успешно', 'Добро пожаловать обратно! 👋');
+      // User state will update automatically, triggering useEffect above
+    } else {
+      setIsLoggingIn(false);
+      Alert.alert('Ошибка', result.error || 'Не удалось войти в аккаунт');
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert('Ошибка', 'Пожалуйста, введите email для восстановления пароля');
+      return;
+    }
+    
+    Alert.prompt(
+      'Восстановление пароля',
+      `Укажи блюдо которое ты готовишь чаще всего (для подтверждения):`,
+      [
+        {
+          text: 'Отмена',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'Отправить',
+          onPress: () => {
+            Alert.alert('Успешно', 'Ссылка для восстановления отправлена на email');
+          },
+        },
+      ],
+      'plain-text'
+    );
   };
 
   const handleGoogleSignIn = () => {
-    console.log('Google Sign In');
-    // Logica pentru Google Sign In
+    Alert.alert('Скоро доступно', 'Вход через Google будет добавлен позже');
   };
 
   const handleFacebookSignIn = () => {
-    console.log('Facebook Sign In');
-    // Logica pentru Facebook Sign In
+    Alert.alert('Скоро доступно', 'Вход через Facebook будет добавлен позже');
   };
 
   return (
@@ -64,6 +116,7 @@ const Login = ({ navigation }) => {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!loading}
                 />
               </View>
             </View>
@@ -80,6 +133,7 @@ const Login = ({ navigation }) => {
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
+                  editable={!loading}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -94,15 +148,36 @@ const Login = ({ navigation }) => {
               </View>
             </View>
 
+            {/* Error Message */}
+            {error && (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle-outline" size={16} color="#FF6B6B" />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
             {/* Forgot Password */}
-            <TouchableOpacity style={styles.forgotPassword}>
+            <TouchableOpacity 
+              style={styles.forgotPassword}
+              onPress={handleForgotPassword}
+            >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
             {/* Sign In Button */}
-            <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
-              <Text style={styles.signInButtonText}>Sign In</Text>
-              <Ionicons name="arrow-forward" size={20} color="white" />
+            <TouchableOpacity 
+              style={[styles.signInButton, (loading || isLoggingIn) && styles.signInButtonDisabled]} 
+              onPress={handleSignIn}
+              disabled={loading || isLoggingIn}
+            >
+              {loading || isLoggingIn ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.signInButtonText}>Sign In</Text>
+                  <Ionicons name="arrow-forward" size={20} color="white" />
+                </>
+              )}
             </TouchableOpacity>
 
             {/* Divider */}
@@ -195,6 +270,23 @@ const styles = StyleSheet.create({
   eyeIcon: {
     padding: 4,
   },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFE8E8',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    borderLeftWidth: 3,
+    borderLeftColor: '#FF6B6B',
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 13,
+    fontWeight: '500',
+    marginLeft: 8,
+    flex: 1,
+  },
   forgotPassword: {
     alignSelf: 'flex-start',
     marginBottom: 30,
@@ -220,6 +312,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  signInButtonDisabled: {
+    opacity: 0.6,
   },
   signInButtonText: {
     color: '#FFFFFF',
@@ -268,7 +363,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   signUpLink: {
-    color: '#FFA500',
+    color: '#2DBD8C',
     fontSize: 14,
     fontWeight: '600',
   },
