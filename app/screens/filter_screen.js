@@ -26,7 +26,6 @@ const FilterScreen = ({ navigation, route }) => {
     'Fruit',
     'Breakfast',
     'Spanish',
-    'Chinese',
     'Lunch',
   ];
 
@@ -107,7 +106,14 @@ const FilterScreen = ({ navigation, route }) => {
                 onPress={() => setSelectedRate(rating)}
               >
                 <View style={styles.rateContent}>
-                  <Text style={styles.rateNumber}>{rating}</Text>
+                  <Text
+                    style={[
+                      styles.rateNumber,
+                      selectedRate === rating && styles.rateNumberActive,
+                    ]}
+                  >
+                    {rating}
+                  </Text>
                   <Ionicons
                     name="star"
                     size={16}
@@ -260,6 +266,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#2DBD8C',
+  },
+  rateNumberActive: {
+    color: '#FFFFFF',
   },
   starContainer: {
     flexDirection: 'row',

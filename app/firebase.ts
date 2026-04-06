@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from 'firebase/auth';
 
 // Ваша Firebase конфигурация
 // Получите эти значения из Firebase Console (https://console.firebase.google.com/)
@@ -17,10 +16,9 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication with persistence
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-});
+// Initialize Firebase Authentication
+// Auth persistence is automatically handled by Firebase SDK
+const auth = getAuth(app);
 
 // Set language code (optional)
 auth.languageCode = 'ru'; // Russian language

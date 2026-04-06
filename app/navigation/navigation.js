@@ -1,7 +1,9 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import FilterScreen from '../screens/filter_screen';
+import FavoritesScreen from '../screens/favorites';
 import Home from '../screens/home_screen';          
 import Login from '../screens/login';
+import RecipeDetail from '../screens/recipe_detail';
 import SearchScreen from '../screens/search';
 import SignUp from '../screens/signup';
 import Welcome from '../screens/welcome';
@@ -19,6 +21,8 @@ function AppNavigation({ user }) {
         }}
       >
         <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Favorites" component={FavoritesScreen} />
+        <Stack.Screen name="RecipeDetail" component={RecipeDetail} />
         <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="Filter" component={FilterScreen} />
       </Stack.Navigator>

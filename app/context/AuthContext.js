@@ -4,6 +4,7 @@ import {
     signInWithEmailAndPassword,
     signOut
 } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '../firebase';
 
@@ -15,6 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const FAVORITES_STORAGE_KEY = '@favorites';
 
   // Listen for authentication state changes
   useEffect(() => {
@@ -25,6 +28,33 @@ export const AuthProvider = ({ children }) => {
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const storedFavorites = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
+        if (storedFavorites) {
+          setFavorites(JSON.parse(storedFavorites));
+        }
+      } catch (err) {
+        console.error('Failed to load favorites', err);
+      }
+    };
+
+    loadFavorites();
+  }, []);
+
+  useEffect(() => {
+    const saveFavorites = async () => {
+      try {
+        await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+      } catch (err) {
+        console.error('Failed to save favorites', err);
+      }
+    };
+
+    saveFavorites();
+  }, [favorites]);
 
   // Sign Up Function
   const signup = async (email, password, confirmPassword) => {
@@ -163,10 +193,39 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   };
 
+  const addFavorite = (recipe) => {
+    setFavorites((prev) => {
+      if (prev.some((item) => item.id === recipe.id)) {
+        return prev;
+      }
+      return [...prev, recipe];
+    });
+  };
+
+  const removeFavorite = (recipeId) => {
+    setFavorites((prev) => prev.filter((item) => item.id !== recipeId));
+  };
+
+  const toggleFavorite = (recipe) => {
+    setFavorites((prev) => {
+      if (prev.some((item) => item.id === recipe.id)) {
+        return prev.filter((item) => item.id !== recipe.id);
+      }
+      return [...prev, recipe];
+    });
+  };
+
+  const isFavorite = (recipeId) => favorites.some((item) => item.id === recipeId);
+
   const value = {
     user,
     loading,
     error,
+    favorites,
+    addFavorite,
+    removeFavorite,
+    toggleFavorite,
+    isFavorite,
     signup,
     login,
     logout,

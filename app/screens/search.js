@@ -11,11 +11,13 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 const SearchScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { toggleFavorite, isFavorite } = useAuth();
 
   const recentSearches = [
     {
@@ -63,8 +65,21 @@ const SearchScreen = ({ navigation }) => {
   ];
 
   const renderRecipeCard = ({ item }) => (
-    <TouchableOpacity style={styles.recipeCard}>
+    <TouchableOpacity
+      style={styles.recipeCard}
+      onPress={() => navigation.navigate('RecipeDetail', { recipe: item })}
+    >
       <Image source={{ uri: item.image }} style={styles.recipeImage} />
+      <TouchableOpacity
+        style={styles.favoriteButton}
+        onPress={() => toggleFavorite(item)}
+      >
+        <Ionicons
+          name={isFavorite(item.id) ? 'heart' : 'heart-outline'}
+          size={18}
+          color={isFavorite(item.id) ? '#FF6B6B' : '#333333'}
+        />
+      </TouchableOpacity>
       <View style={styles.ratingBadge}>
         <Ionicons name="star" size={12} color="#FFA500" />
         <Text style={styles.ratingText}>{item.rating}</Text>
@@ -211,10 +226,22 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 140,
   },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
   ratingBadge: {
     position: 'absolute',
     top: 8,
-    right: 8,
+    right: 56,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
