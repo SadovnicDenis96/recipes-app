@@ -1,38 +1,50 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 
-const Login = ({ navigation }) => {
+const SignUp = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  
-  const { login, loading, error, user } = useAuth();
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+
+  const { signup, loading, error, user } = useAuth();
 
   // Navigate to Home once user is authenticated
   useEffect(() => {
-    if (user && isLoggingIn) {
-      setIsLoggingIn(false);
-      // User is authenticated, app will automatically navigate to Home
-      // via the AppNavigation conditional logic
+    if (user && isSigningUp) {
+      setIsSigningUp(false);
+      Alert.alert('Успешно', 'Аккаунт создан! 🎉\nДобро пожаловать в Recipes App!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Reset form
+            setEmail('');
+            setPassword('');
+            setConfirmPassword('');
+          }
+        }
+      ]);
     }
-  }, [user, isLoggingIn]);
+  }, [user, isSigningUp]);
 
-  const handleSignIn = async () => {
+  const handleSignUp = async () => {
     if (!email.trim()) {
       Alert.alert('Ошибка', 'Пожалуйста, введите email');
       return;
@@ -43,50 +55,32 @@ const Login = ({ navigation }) => {
       return;
     }
 
-    setIsLoggingIn(true);
-    const result = await login(email, password);
-
-    if (result.success) {
-      Alert.alert('Успешно', 'Добро пожаловать обратно! 👋');
-      // User state will update automatically, triggering useEffect above
-    } else {
-      setIsLoggingIn(false);
-      Alert.alert('Ошибка', result.error || 'Не удалось войти в аккаунт');
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email.trim()) {
-      Alert.alert('Ошибка', 'Пожалуйста, введите email для восстановления пароля');
+    if (!confirmPassword) {
+      Alert.alert('Ошибка', 'Пожалуйста, подтвердите пароль');
       return;
     }
-    
-    Alert.prompt(
-      'Восстановление пароля',
-      `Укажи блюдо которое ты готовишь чаще всего (для подтверждения):`,
-      [
-        {
-          text: 'Отмена',
-          onPress: () => {},
-          style: 'cancel',
-        },
-        {
-          text: 'Отправить',
-          onPress: () => {
-            Alert.alert('Успешно', 'Ссылка для восстановления отправлена на email');
-          },
-        },
-      ],
-      'plain-text'
-    );
+
+    if (!agreedToTerms) {
+      Alert.alert('Ошибка', 'Пожалуйста, примите условия использования');
+      return;
+    }
+
+    setIsSigningUp(true);
+    const result = await signup(email, password, confirmPassword);
+
+    if (!result.success) {
+      setIsSigningUp(false);
+      Alert.alert('Ошибка', result.error || 'Не удалось создать аккаунт');
+    }
+    // If success, wait for user state update from useEffect above
   };
 
-  const handleGoogleSignIn = () => {
-    Alert.alert('Скоро доступно', 'Вход через Google будет добавлен позже');
+  const handleGoogleSignUp = () => {
+    Alert.alert('Скоро доступно', 'Регистрация через Google будет добавлена позже');
   };
 
-  const handleFacebookSignIn = () => {
-    Alert.alert('Скоро доступно', 'Вход через Facebook будет добавлен позже');
+  const handleFacebookSignUp = () => {
+    Alert.alert('Скоро доступно', 'Регистрация через Facebook будет добавлена позже');
   };
 
   return (
@@ -99,8 +93,8 @@ const Login = ({ navigation }) => {
           <View style={styles.content}>
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.helloText}>Hello,</Text>
-              <Text style={styles.welcomeText}>Welcome Back!</Text>
+              <Text style={styles.helloText}>Create Account</Text>
+              <Text style={styles.welcomeText}>Join our cooking community</Text>
             </View>
 
             {/* Email Input */}
@@ -110,7 +104,7 @@ const Login = ({ navigation }) => {
                 <Ionicons name="mail-outline" size={20} color="#999" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter Email"
+                  placeholder="Enter your email"
                   placeholderTextColor="#999"
                   value={email}
                   onChangeText={setEmail}
@@ -123,12 +117,12 @@ const Login = ({ navigation }) => {
 
             {/* Password Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Enter Password</Text>
+              <Text style={styles.label}>Password</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons name="lock-closed-outline" size={20} color="#999" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter Password"
+                  placeholder="Create a password"
                   placeholderTextColor="#999"
                   value={password}
                   onChangeText={setPassword}
@@ -146,6 +140,34 @@ const Login = ({ navigation }) => {
                   />
                 </TouchableOpacity>
               </View>
+              <Text style={styles.hint}>Минимум 6 символов</Text>
+            </View>
+
+            {/* Confirm Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={20} color="#999" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm your password"
+                  placeholderTextColor="#999"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <Ionicons
+                    name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color="#999"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Error Message */}
@@ -156,25 +178,38 @@ const Login = ({ navigation }) => {
               </View>
             )}
 
-            {/* Forgot Password */}
-            <TouchableOpacity 
-              style={styles.forgotPassword}
-              onPress={handleForgotPassword}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
+            {/* Terms and Conditions */}
+            <View style={styles.termsContainer}>
+              <TouchableOpacity
+                style={styles.checkbox}
+                onPress={() => setAgreedToTerms(!agreedToTerms)}
+              >
+                <Ionicons
+                  name={agreedToTerms ? 'checkbox' : 'checkbox-outline'}
+                  size={20}
+                  color={agreedToTerms ? '#2DBD8C' : '#999'}
+                />
+              </TouchableOpacity>
+              <View style={styles.termsText}>
+                <Text style={styles.agreeText}>
+                  Я согласен с{' '}
+                  <Text style={styles.link}>условиями использования</Text> и{' '}
+                  <Text style={styles.link}>политикой конфиденциальности</Text>
+                </Text>
+              </View>
+            </View>
 
-            {/* Sign In Button */}
-            <TouchableOpacity 
-              style={[styles.signInButton, (loading || isLoggingIn) && styles.signInButtonDisabled]} 
-              onPress={handleSignIn}
-              disabled={loading || isLoggingIn}
+            {/* Sign Up Button */}
+            <TouchableOpacity
+              style={[styles.signUpButton, (loading || isSigningUp) && styles.signUpButtonDisabled]}
+              onPress={handleSignUp}
+              disabled={loading || isSigningUp || !agreedToTerms}
             >
-              {loading || isLoggingIn ? (
+              {loading || isSigningUp ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (
                 <>
-                  <Text style={styles.signInButtonText}>Sign In</Text>
+                  <Text style={styles.signUpButtonText}>Create Account</Text>
                   <Ionicons name="arrow-forward" size={20} color="white" />
                 </>
               )}
@@ -183,25 +218,25 @@ const Login = ({ navigation }) => {
             {/* Divider */}
             <View style={styles.divider}>
               <View style={styles.line} />
-              <Text style={styles.dividerText}>Or Sign In With</Text>
+              <Text style={styles.dividerText}>Or Sign Up With</Text>
               <View style={styles.line} />
             </View>
 
-            {/* Social Login Buttons */}
+            {/* Social SignUp Buttons */}
             <View style={styles.socialButtons}>
-              <TouchableOpacity style={styles.socialButton} onPress={handleGoogleSignIn}>
+              <TouchableOpacity style={styles.socialButton} onPress={handleGoogleSignUp}>
                 <Ionicons name="logo-google" size={24} color="#DB4437" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton} onPress={handleFacebookSignIn}>
+              <TouchableOpacity style={styles.socialButton} onPress={handleFacebookSignUp}>
                 <Ionicons name="logo-facebook" size={24} color="#4267B2" />
               </TouchableOpacity>
             </View>
 
-            {/* Sign Up Link */}
-            <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                <Text style={styles.signUpLink}>Sign up</Text>
+            {/* Sign In Link */}
+            <View style={styles.signInContainer}>
+              <Text style={styles.signInText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.signInLink}>Sign in</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -225,7 +260,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    paddingTop: 60,
+    paddingTop: 40,
+    paddingBottom: 40,
   },
   header: {
     marginBottom: 40,
@@ -237,7 +273,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   welcomeText: {
-    fontSize: 20,
+    fontSize: 16,
     color: '#666666',
   },
   inputContainer: {
@@ -248,6 +284,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333333',
     marginBottom: 8,
+  },
+  hint: {
+    fontSize: 12,
+    color: '#999999',
+    marginTop: 6,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -287,16 +328,29 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
-  forgotPassword: {
-    alignSelf: 'flex-start',
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginBottom: 30,
+    paddingHorizontal: 8,
   },
-  forgotPasswordText: {
-    color: '#FFA500',
-    fontSize: 14,
+  checkbox: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  termsText: {
+    flex: 1,
+  },
+  agreeText: {
+    fontSize: 13,
+    color: '#666666',
+    lineHeight: 18,
+  },
+  link: {
+    color: '#2DBD8C',
     fontWeight: '600',
   },
-  signInButton: {
+  signUpButton: {
     backgroundColor: '#2DBD8C',
     flexDirection: 'row',
     alignItems: 'center',
@@ -313,10 +367,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  signInButtonDisabled: {
+  signUpButtonDisabled: {
     opacity: 0.6,
   },
-  signInButtonText: {
+  signUpButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
@@ -353,20 +407,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  signUpContainer: {
+  signInContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  signUpText: {
+  signInText: {
     color: '#666666',
     fontSize: 14,
   },
-  signUpLink: {
+  signInLink: {
     color: '#2DBD8C',
     fontSize: 14,
     fontWeight: '600',
   },
 });
 
-export default Login;
+export default SignUp;

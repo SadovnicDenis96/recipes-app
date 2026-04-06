@@ -4,12 +4,12 @@ import React from 'react';
 import {
     Dimensions,
     ImageBackground,
-    SafeAreaView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 
